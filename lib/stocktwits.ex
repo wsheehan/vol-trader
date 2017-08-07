@@ -1,5 +1,4 @@
 defmodule Stocktwits do
-
   @moduledoc """
   Manages Connection to Stocktwits api
   for trending & sentiment data. Extends
@@ -8,7 +7,7 @@ defmodule Stocktwits do
 
   use HTTPoison.Base
 
-  @relevant_fiels ~w(
+  @trending_fields ~w(
     symbol title
   )
 
@@ -23,6 +22,6 @@ defmodule Stocktwits do
 
   def trending do
     get!("/trending/symbols.json").body["symbols"]
-    |> Enum.map(fn(x) -> Map.take(x, ["symbol", "title"]) end)
+    |> Enum.map(fn(x) -> Map.take(x, @trending_fields) end)
   end
 end
