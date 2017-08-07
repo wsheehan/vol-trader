@@ -42,7 +42,7 @@ defmodule Voltrader.Registry do
     if Map.has_key?(names, name) do
       {:reply, %{error: "process already exists"}, {names, refs}}
     else
-      {:ok, pid} = Voltrader.Trader.start_link([])
+      {:ok, pid} = Voltrader.TraderSupervisor.start_trader()
       ref = Process.monitor(pid)
       refs = Map.put(refs, ref, name)
       names = Map.put(names, name, pid)

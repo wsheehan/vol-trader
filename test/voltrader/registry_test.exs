@@ -24,4 +24,11 @@ defmodule Voltrader.RegistryTest do
     Agent.stop(trader)
     assert Registry.lookup(registry, "NFLX") == :error
   end
+
+  test "remove traders on crash", %{registry: registry} do
+    Registry.create(registry, "INTC")
+    {:ok, trader} = Registry.lookup(registry, "INTC")
+    Agent.stop(trader, :shutdown)
+    assert Registry.lookup(registry, "INTC") == :error
+  end
 end
