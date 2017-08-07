@@ -9,10 +9,10 @@ defmodule Voltrader.Supervisor do
 
   def init(:ok) do
     children = [
-      {Registry, name: Registry},
-      Voltrader.TraderSupervisor
+      Voltrader.TraderSupervisor,
+      {Registry, name: Registry}
     ]
 
-    Supervisor.init(children, strategy: :one_for_one)
+    Supervisor.init(children, strategy: :one_for_all)
   end
 end
