@@ -8,7 +8,7 @@ defmodule Voltrader.TraderTest do
     %{trader: trader}
   end
 
-  test "nothing here yet" do
-    # ...
+  test "traders are temporary workers" do
+    assert Supervisor.child_spec(Trader, []).restart == :temporary
   end 
 end

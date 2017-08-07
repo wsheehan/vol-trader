@@ -6,7 +6,7 @@ defmodule Voltrader.Trader do
   by research
   """
 
-  use Agent
+  use Agent, restart: :temporary
 
   @doc """
   Starts a trading process
