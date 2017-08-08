@@ -23,7 +23,8 @@ defmodule Voltrader.Mixfile do
       {:httpoison, "~> 0.12"},
       {:poison, "~> 3.1"},
       {:quantum, ">= 2.0.0"},
-      {:timex, "~> 3.0"}
+      {:timex, "~> 3.0"},
+      {:socket, "~> 0.3"}
     ]
   end
 end
