@@ -1,8 +1,8 @@
 defmodule Stocktwits do
   @moduledoc """
   Manages Connection to Stocktwits api
-  for trending & sentiment data. Extends
-  HTTPoison creating a Stocktwit api client
+  for trending data. Extends HTTPoison
+  creating a Stocktwit api client
   """
 
   use HTTPoison.Base
