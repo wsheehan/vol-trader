@@ -10,7 +10,7 @@ defmodule Voltrader.Data.PriceSocket do
     Agent.start_link(fn -> connect() end)
   end
 
-  def connect do
+  defp connect do
     Socket.Web.connect! slug().url, path: slug().path, secure: true
   end
 
