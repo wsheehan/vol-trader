@@ -1,5 +1,7 @@
 use Mix.Config
 
+config :voltrader, intrinio_socket_token: System.get_env("INTRINIO_SOCKET_TOKEN")
+
 config :voltrader, Voltrader.Scheduler,
   jobs: [
     # Every Minute
