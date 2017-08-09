@@ -7,15 +7,18 @@ defmodule Voltrader.Data.PriceSocket do
   use Agent
 
   def start_link(_opts) do
-    Agent.start_link(fn -> connect(get_token) end)
+    Agent.start_link(fn -> connect() end)
   end
 
-  def connect(token) do
-    IO.puts "init price socket connection"
+  def connect do
+    Socket.Web.connect! slug().url, path: slug().path, secure: true
   end
 
-  def get_token do
-    "SFMyNTY.g3QAAAACZAAEZGF0YWIAAAlzZAAGc2lnbmVkbgYAiJIww10B._EBlL4jb_arXsdZfqcwSG3eJ3hcf1lVSq0egRzqpDSU"
+  defp slug do
+    %{url: "realtime.intrinio.com", path: "/socket/websocket?vsn=1.0.0&token=#{get_token()}"}
   end
 
+  defp get_token do
+    Application.get_env(:voltrader, :intrinio_socket_token)
+  end
 end
