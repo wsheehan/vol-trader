@@ -5,7 +5,15 @@ config :voltrader, intrinio_socket_token: System.get_env("INTRINIO_SOCKET_TOKEN"
 config :voltrader, Voltrader.Scheduler,
   jobs: [
     # Every Minute
-    {"* * * * *", fn -> IO.puts "HEARTBEAT" end}
+    {"* * * * *", fn -> 
+      msg = Poison.encode!(%{event: "ping"})
+      Agent.get(Voltrader.Data.PriceSocket, fn socket ->
+        case socket |> Socket.Web.send!({:text, msg}) do
+          _ ->
+            IO.puts "HEARTBEAT"
+        end
+      end)
+    end}
   ]
 
 # You can configure your application as:
