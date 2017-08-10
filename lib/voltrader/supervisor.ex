@@ -10,8 +10,8 @@ defmodule Voltrader.Supervisor do
 
   def init(:ok) do
     children = [
-      {Voltrader.TraderSupervisor, name: Voltrader.TraderSupervisor},
-      {Voltrader.Registry, name: Voltrader.Registry},
+      {Voltrader.Trader.Supervisor, name: Voltrader.Trader.Supervisor},
+      {Voltrader.Trader.Registry, name: Voltrader.Trader.Registry},
       {Voltrader.Socket.Server, name: Voltrader.Socket.Server}
     ]
 
