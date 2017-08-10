@@ -12,8 +12,8 @@ defmodule Voltrader.Socket.Server do
   @doc """
   Start Socker Server
   """
-  def start_link do
-    GenServer.start_link(__MODULE__, :ok, [])
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, :ok, opts)
   end
 
   # Server
@@ -33,8 +33,8 @@ defmodule Voltrader.Socket.Server do
   """
   def handle_info(:heartbeat, state) do
     heartbeat(state)
-    {:ok, msg} = Poison.encode!(%{event: "ping"})
-    socket |> Socket.Web.send!({:text, msg})
+    {:ok, msg} = Poison.encode(%{event: "ping"})
+    state.socket |> Socket.Web.send!({:text, msg})
     {:noreply, state}
   end
 
