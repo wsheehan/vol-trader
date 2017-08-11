@@ -1,7 +1,7 @@
-defmodule Voltrader.RegistryTest do
+defmodule Voltrader.Trader.RegistryTest do
   use ExUnit.Case, async: true
 
-  alias Voltrader.Registry
+  alias Voltrader.Trader.Registry
 
   setup do
     {:ok, registry} = start_supervised Registry
