@@ -5,7 +5,7 @@ defmodule Voltrader.Trader.Supervisor do
     Supervisor.start_link(__MODULE__, :ok, opts)
   end
 
-  def start_socket do
+  def start_trader do
     Supervisor.start_child(@name, [])
   end
 
