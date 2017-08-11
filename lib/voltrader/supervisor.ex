@@ -12,7 +12,7 @@ defmodule Voltrader.Supervisor do
     children = [
       {Voltrader.Trader.Supervisor, name: Voltrader.Trader.Supervisor},
       {Voltrader.Trader.Registry, name: Voltrader.Trader.Registry},
-      {Voltrader.Socket.Server, name: Voltrader.Socket.Server}
+      {Voltrader.Socket.Client, name: Voltrader.Socket.Client}
     ]
 
     Supervisor.init(children, strategy: :one_for_all)
