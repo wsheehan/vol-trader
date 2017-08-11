@@ -12,6 +12,6 @@ defmodule Voltrader.Trader do
   Starts a trading process
   """
   def start_link(_opts) do
-    Agent.start_link(fn -> open_channel() end)
+    Agent.start_link(fn -> %{} end)
   end
 end
