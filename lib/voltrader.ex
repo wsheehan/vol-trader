@@ -3,16 +3,9 @@ defmodule Voltrader do
   Documentation for Voltrader.
   """
 
-  @doc """
-  Hello world.
+  use Application
 
-  ## Examples
-
-      iex> Voltrader.hello
-      :world
-
-  """
-  def hello do
-    :world
+  def start(_type, _args) do
+    Voltrader.Supervisor.start_link(name: Voltrader.Supervisor)
   end
 end
