@@ -1,4 +1,4 @@
-defmodule Voltrader.Socket.Server do
+defmodule Voltrader.Socket.Client do
   @moduledoc """
   Client and Server for WebSocket connections
   """
@@ -7,6 +7,7 @@ defmodule Voltrader.Socket.Server do
 
   @slug %{url: "api.bitfinex.com", path: "/ws/2"}
   @pong Poison.encode!(%{event: "pong"})
+  # @subscribed Poison.encode!(%{event: "subscribed", channel: "ticker", chanID: chanID, sybmol: _, pair: _})
 
   # Client
 
@@ -43,7 +44,7 @@ defmodule Voltrader.Socket.Server do
         IO.puts "Channel Opened"
         Process.send(self(), :response, [])
     end
-    {:reply, ticker, {socket, List.insert_at(channels, 0, ticker)}}
+    {:reply, socket, {socket, List.insert_at(channels, 0, ticker)}}
   end
 
   @doc """
@@ -53,8 +54,9 @@ defmodule Voltrader.Socket.Server do
     case socket |> Socket.Web.recv! do
       {:text, @pong} ->
         IO.puts "PONG"
-      _ ->
-        IO.puts "Message Received"
+      {:text, data} ->
+        {:ok, decoded_data} = Poison.decode(data)
+        handle_response(decoded_data)
     end
     delay_listen()
     {:noreply, {socket, channels}}
@@ -78,23 +80,27 @@ defmodule Voltrader.Socket.Server do
     {:noreply, {socket, channels}}
   end
 
-  @doc """
-  Listen for Response
-  """
+  # Private functions
+
+  defp handle_response(data) do
+    case data do
+      [chanID, prices] ->
+        IO.puts "PRICE DATA"
+      %{"chanId" => chanID, "channel" => "ticker", "event" => "subscribed", "pair" => _, "symbol" => _} ->
+        IO.puts "SUBSCRIBED"
+      %{"event" => "info", "version" => 2} ->
+        IO.puts "MASTER CONNECTION"
+    end
+  end
+
   defp delay_listen do
     Process.send_after(self(), :response, 5000)
   end
 
-  @doc """
-  Make global connection to websocket
-  """
   defp global_connection do
     Socket.Web.connect! @slug.url, path: @slug.path, secure: true
   end
 
-  @doc """
-  Heartbeat to keep connection alive
-  """
   defp heartbeat do
     Process.send_after(self(), :heartbeat, 10000)
   end
