@@ -1,5 +1,7 @@
 use Mix.Config
 
+config :voltrader, intrinio_token: System.get_env("INTRINIO_SOCKET_TOKEN")
+
 # You can configure your application as:
 #
 #     config :voltrader, key: :value
