@@ -6,7 +6,7 @@ defmodule Voltrader.Trader.Supervisor do
   end
 
   def start_trader do
-    Supervisor.start_child(@name, [])
+    Supervisor.start_child(__MODULE__, [])
   end
 
   def init(:ok) do

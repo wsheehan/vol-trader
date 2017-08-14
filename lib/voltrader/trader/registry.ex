@@ -12,18 +12,17 @@ defmodule Voltrader.Trader.Registry do
 
   @doc """
   Looks up trader pid for `name` stored in `server`.
-
   Returns `{:ok, pid}` if trader exists, :error otherwise.
   """
-  def lookup(server, name) do
-    GenServer.call(server, {:lookup, name})
+  def lookup(server, name, socket) do
+    GenServer.call(server, {:lookup, {name,socket}})
   end
 
   @doc """
   Ensures there is a trader associated to the given `name` in `server`.
   """
-  def create(server, name) do
-    GenServer.call(server, {:create, name})
+  def create(server, name, socket) do
+    GenServer.call(server, {:create, {name, socket}})
   end
 
   ## Server Callbacks
@@ -34,19 +33,19 @@ defmodule Voltrader.Trader.Registry do
     {:ok, {names, refs}}
   end
 
-  def handle_call({:lookup, name}, _from, {names, _} = state) do
-    {:reply, Map.fetch(names, name), state}
+  def handle_call({:lookup, {name, socket}}, _from, {names, _} = state) do
+    {:reply, Map.fetch(names, {name, socket}), state}
   end
 
-  def handle_call({:create, name}, _from, {names, refs}) do
-    if Map.has_key?(names, name) do
+  def handle_call({:create, {name, socket}}, _from, {names, refs}) do
+    if Map.has_key?(names, {name, socket}) do
       {:reply, %{error: "process already exists"}, {names, refs}}
     else
       {:ok, pid} = Voltrader.Trader.Supervisor.start_trader()
       ref = Process.monitor(pid)
-      refs = Map.put(refs, ref, name)
-      names = Map.put(names, name, pid)
-      {:reply, %{name: pid}, {names, refs}}
+      refs = Map.put(refs, ref, {name, socket})
+      names = Map.put(names, {name, socket}, pid)
+      {:reply, %{{name, socket} => pid}, {names, refs}}
     end
   end
 
