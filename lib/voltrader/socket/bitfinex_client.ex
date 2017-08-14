@@ -1,9 +1,11 @@
 defmodule Voltrader.Socket.BitfinexClient do
   @moduledoc """
-  Client and Server for WebSocket connections
+  Client and Server for Bitfinex WebSocket connections
   """
 
   use GenServer
+
+  alias Voltrader.Socket.Helper
 
   @slug %{url: "api.bitfinex.com", path: "/ws/2"}
   @pong Poison.encode!(%{event: "pong"})
@@ -24,12 +26,12 @@ defmodule Voltrader.Socket.BitfinexClient do
   # Server
 
   @doc """
-  Init server with global_connection() and
-  an initial heartbeat
+  Init server with master socket
+  connection and an initial heartbeat
   """
   def init(:ok) do
-    state = {global_connection(), []}
-    heartbeat()
+    state = {Helper.connection(@slug), []}
+    Helper.heartbeat(self(), 10000)
     {:ok, state}
   end
 
@@ -57,7 +59,7 @@ defmodule Voltrader.Socket.BitfinexClient do
         {:ok, decoded_data} = Poison.decode(data)
         handle_response(decoded_data)
     end
-    listen()
+    Helper.listen(self())
     {:noreply, {socket, channels}}
   end
 
@@ -65,7 +67,7 @@ defmodule Voltrader.Socket.BitfinexClient do
   Handle heartbeat messages
   """
   def handle_info(:heartbeat, {socket, channels}) do
-    heartbeat()
+    Helper.heartbeat(self(), 10000)
     {:ok, msg} = Poison.encode(%{event: "ping"})
     socket |> Socket.Web.send!({:text, msg})
     {:noreply, {socket, channels}}
@@ -90,17 +92,5 @@ defmodule Voltrader.Socket.BitfinexClient do
       %{"event" => "info", "version" => 2} ->
         IO.puts "MASTER CONNECTION"
     end
-  end
-
-  defp listen do
-    Process.send(self(), :response, [])
-  end
-
-  defp global_connection do
-    Socket.Web.connect! @slug.url, path: @slug.path, secure: true
-  end
-
-  defp heartbeat do
-    Process.send_after(self(), :heartbeat, 10000)
   end
 end

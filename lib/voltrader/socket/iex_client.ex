@@ -5,6 +5,8 @@ defmodule Voltrader.Socket.IEXClient do
 
   use GenServer
 
+  alias Voltrader.Socket.Helper
+
   @token System.get_env("INTRINIO_SOCKET_TOKEN")
   @slug %{url: "realtime.intrinio.com", path: "/socket/websocket?vsn=1.0.0&token=#{@token}"}
 
@@ -23,8 +25,8 @@ defmodule Voltrader.Socket.IEXClient do
   an initial heartbeat
   """
   def init(:ok) do
-    state = {global_connection(), []}
-    heartbeat()
+    state = {Helper.connection(@slug), []}
+    Helper.heartbeat(self(), 20000)
     {:ok, state}
   end
 
@@ -51,7 +53,7 @@ defmodule Voltrader.Socket.IEXClient do
         IO.inspect(decoded_data)
         handle_response(decoded_data)
     end
-    listen()
+    Helper.listen(self())
     {:noreply, {socket, channels}}
   end
 
@@ -59,7 +61,7 @@ defmodule Voltrader.Socket.IEXClient do
   Handle heartbeat messages
   """
   def handle_info(:heartbeat, {socket, channels}) do
-    heartbeat()
+    Helper.heartbeat(self(), 20000)
     {:ok, msg} = Poison.encode(%{topic: "phoenix", event: "heartbeat", payload: %{}, ref: nil})
     socket |> Socket.Web.send!({:text, msg})
     {:noreply, {socket, channels}}
@@ -87,15 +89,11 @@ defmodule Voltrader.Socket.IEXClient do
     end
   end
 
-  defp listen do
-    Process.send(self(), :response, [])
-  end
+  # defp listen do
+  #   Process.send(self(), :response, [])
+  # end
 
-  defp global_connection do
-    Socket.Web.connect! @slug.url, path: @slug.path, secure: true
-  end
-
-  # defp heartbeat do
-  #   Process.send_after(self(), :heartbeat, 20000)
+  # defp global_connection do
+  #   Socket.Web.connect! @slug.url, path: @slug.path, secure: true
   # end
 end
