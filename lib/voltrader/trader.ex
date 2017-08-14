@@ -6,12 +6,22 @@ defmodule Voltrader.Trader do
   by research
   """
 
-  use Agent, restart: :temporary
+  use GenServer
+
+  # Client
 
   @doc """
-  Starts a trading process
+  Starts a trading server
   """
-  def start_link(_opts) do
-    Agent.start_link(fn -> %{} end)
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, :ok, opts)
   end
+
+  # Server
+
+  def init(:ok) do
+    state = %{}
+    {:ok, state}
+  end
+
 end
