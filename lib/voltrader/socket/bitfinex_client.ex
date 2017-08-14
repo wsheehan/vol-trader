@@ -1,4 +1,4 @@
-defmodule Voltrader.Socket.Client do
+defmodule Voltrader.Socket.BitfinexClient do
   @moduledoc """
   Client and Server for WebSocket connections
   """
@@ -7,7 +7,6 @@ defmodule Voltrader.Socket.Client do
 
   @slug %{url: "api.bitfinex.com", path: "/ws/2"}
   @pong Poison.encode!(%{event: "pong"})
-  # @subscribed Poison.encode!(%{event: "subscribed", channel: "ticker", chanID: chanID, sybmol: _, pair: _})
 
   # Client
 
@@ -58,7 +57,7 @@ defmodule Voltrader.Socket.Client do
         {:ok, decoded_data} = Poison.decode(data)
         handle_response(decoded_data)
     end
-    delay_listen()
+    listen()
     {:noreply, {socket, channels}}
   end
 
@@ -93,8 +92,8 @@ defmodule Voltrader.Socket.Client do
     end
   end
 
-  defp delay_listen do
-    Process.send_after(self(), :response, 5000)
+  defp listen do
+    Process.send(self(), :response, [])
   end
 
   defp global_connection do
