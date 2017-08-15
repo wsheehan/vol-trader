@@ -1,6 +1,10 @@
 use Mix.Config
 
-config :voltrader, intrinio_token: System.get_env("INTRINIO_SOCKET_TOKEN")
+config :voltrader, 
+  intrinio_token: System.get_env("INTRINIO_SOCKET_TOKEN"),
+  bitfinex_api_key: System.get_env("BITFINEX_API_KEY"),
+  bitfinex_api_secret: System.get_env("BITFINEX_API_SECRET")
+
 
 # You can configure your application as:
 #
