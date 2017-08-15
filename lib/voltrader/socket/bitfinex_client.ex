@@ -9,6 +9,7 @@ defmodule Voltrader.Socket.BitfinexClient do
   alias Voltrader.Trader.Registry
 
   @slug %{url: "api.bitfinex.com", path: "/ws/2"}
+  @price_labels ~w(bid bid_size ask ask_size daily_change daily_change_perc last_price volume high low)
 
   # Client
 
@@ -42,13 +43,13 @@ defmodule Voltrader.Socket.BitfinexClient do
     {:ok, msg} = Poison.encode(%{event: "subscribe", channel: "ticker", symbol: ticker})
     case socket |> Socket.Web.send!({:text, msg}) do
       :ok ->
-        IO.puts "Channel Opened"
+        IO.puts "#{ticker} Channel Opened"
         Registry.create(Registry, ticker, __MODULE__)
         unless listening do
           Helper.listen(self())
         end
     end
-    {:reply, socket, {socket, channels, true}}
+    {:reply, channels, {socket, channels, true}}
   end
 
   @doc """
@@ -60,12 +61,11 @@ defmodule Voltrader.Socket.BitfinexClient do
         Process.send(self(), {:set_channel, ticker, channel_id}, [])
       %{"event" => "error", "msg" => "subscribe: dup", "channel" => _, "code" => _, "pair" => _, "symbol" => _} ->
         IO.warn("Duplicate Subscription")
-      [channel_id, prices] ->
+      [channel_id, prices] when is_list(prices) ->
         %{^channel_id => ticker} = Enum.find(channels, fn(el) -> Map.keys(el) == [channel_id] end)
         {:ok, trader} = Registry.lookup(Registry, ticker, __MODULE__)
-        # Need to structure price data here...
-        Process.send(trader, {:quote, prices}, [])
-      _ ->
+        Process.send(trader, {:quote, format_price_data(prices), ticker}, [])
+      _ -> nil
     end
     Helper.listen(self())
     {:noreply, {socket, channels, listening}}
@@ -86,5 +86,11 @@ defmodule Voltrader.Socket.BitfinexClient do
   """
   def handle_info({:set_channel, ticker, channel_id}, {socket, channels, _}) do
     {:noreply, {socket, channels ++ [%{channel_id => ticker}], true}}
+  end
+
+  # Private
+
+  defp format_price_data(data) do
+    Enum.zip(@price_labels, data) |> Enum.into(%{})
   end
 end
