@@ -6,9 +6,5 @@ defmodule Voltrader.TraderTest do
   setup do
     {:ok, trader} = start_supervised(Trader)
     %{trader: trader}
-  end
-
-  test "traders are temporary workers" do
-    assert Supervisor.child_spec(Trader, []).restart == :temporary
   end 
 end
