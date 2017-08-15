@@ -1,3 +1,3 @@
-# Volatility Trader
+# Automated Trader
 
-Combine trending companies & sentiment, elixir trader
+Sketch of architecture to come...
