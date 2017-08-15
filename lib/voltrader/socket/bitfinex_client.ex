@@ -64,7 +64,7 @@ defmodule Voltrader.Socket.BitfinexClient do
       [channel_id, prices] when is_list(prices) ->
         %{^channel_id => ticker} = Enum.find(channels, fn(el) -> Map.keys(el) == [channel_id] end)
         {:ok, trader} = Registry.lookup(Registry, ticker, __MODULE__)
-        Process.send(trader, {:quote, format_price_data(prices), ticker}, [])
+        Process.send(trader, {:quote, format_price_data(prices, @price_labels), ticker}, [])
       _ -> nil
     end
     Helper.listen(self())
@@ -86,6 +86,13 @@ defmodule Voltrader.Socket.BitfinexClient do
   """
   def handle_info({:set_channel, ticker, channel_id}, {socket, channels, _}) do
     {:noreply, {socket, channels ++ [%{channel_id => ticker}], true}}
+  end
+
+  @doc """
+  Catch-all
+  """
+  def handle_info(_msg, state) do
+    {:noreply, state}
   end
 
   # Private
