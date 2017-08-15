@@ -6,9 +6,9 @@ defmodule Voltrader.Socket.BitfinexClient do
   use GenServer
 
   alias Voltrader.Socket.Helper
+  alias Voltrader.Trader.Registry
 
   @slug %{url: "api.bitfinex.com", path: "/ws/2"}
-  @pong Poison.encode!(%{event: "pong"})
 
   # Client
 
@@ -30,7 +30,7 @@ defmodule Voltrader.Socket.BitfinexClient do
   connection and an initial heartbeat
   """
   def init(:ok) do
-    state = {Helper.connection(@slug), []}
+    state = {Helper.connection(@slug), [], false}
     Helper.heartbeat(self(), 10000)
     {:ok, state}
   end
@@ -38,59 +38,53 @@ defmodule Voltrader.Socket.BitfinexClient do
   @doc """
   Spin up channel
   """
-  def handle_call({:join_channel, ticker}, _from, {socket, channels}) do
-    {:ok, msg} = Poison.encode(%{event: "subscribe", channel: "ticker", symbol: "tBTCUSD"})
+  def handle_call({:join_channel, ticker}, _from, {socket, channels, listening}) do
+    {:ok, msg} = Poison.encode(%{event: "subscribe", channel: "ticker", symbol: ticker})
     case socket |> Socket.Web.send!({:text, msg}) do
       :ok ->
         IO.puts "Channel Opened"
-        Process.send(self(), :response, [])
+        Registry.create(Registry, ticker, __MODULE__)
+        unless listening do
+          Helper.listen(self())
+        end
     end
-    {:reply, socket, {socket, List.insert_at(channels, 0, ticker)}}
+    {:reply, socket, {socket, channels, true}}
   end
 
   @doc """
   Handle all websocket responses
   """
-  def handle_info(:response, {socket, channels}) do
-    case socket |> Socket.Web.recv! do
-      {:text, @pong} ->
-        IO.puts "PONG"
-      {:text, data} ->
-        {:ok, decoded_data} = Poison.decode(data)
-        handle_response(decoded_data)
+  def handle_info(:response, {socket, channels, listening}) do
+    case socket |> Socket.Web.recv! |> elem(1) |> Poison.decode! do
+      %{"chanId" => channel_id, "channel" => "ticker", "event" => "subscribed", "pair" => _, "symbol" => ticker} ->
+        Process.send(self(), {:set_channel, ticker, channel_id}, [])
+      %{"event" => "error", "msg" => "subscribe: dup", "channel" => _, "code" => _, "pair" => _, "symbol" => _} ->
+        IO.warn("Duplicate Subscription")
+      [channel_id, prices] ->
+        %{^channel_id => ticker} = Enum.find(channels, fn(el) -> Map.keys(el) == [channel_id] end)
+        {:ok, trader} = Registry.lookup(Registry, ticker, __MODULE__)
+        # Need to structure price data here...
+        Process.send(trader, {:quote, prices}, [])
+      _ ->
     end
     Helper.listen(self())
-    {:noreply, {socket, channels}}
+    {:noreply, {socket, channels, listening}}
   end
 
   @doc """
   Handle heartbeat messages
   """
-  def handle_info(:heartbeat, {socket, channels}) do
+  def handle_info(:heartbeat, {socket, channels, listening}) do
     Helper.heartbeat(self(), 10000)
     {:ok, msg} = Poison.encode(%{event: "ping"})
     socket |> Socket.Web.send!({:text, msg})
-    {:noreply, {socket, channels}}
+    {:noreply, {socket, channels, listening}}
   end
 
   @doc """
-  Handle Join Messages
+  Write channel data to server state
   """
-  def handle_info(:join, {socket, channels}) do
-    IO.puts "Socket has joined new channel"
-    {:noreply, {socket, channels}}
-  end
-
-  # Private functions
-
-  defp handle_response(data) do
-    case data do
-      [chanID, prices] ->
-        IO.puts "PRICE DATA"
-      %{"chanId" => chanID, "channel" => "ticker", "event" => "subscribed", "pair" => _, "symbol" => _} ->
-        IO.puts "SUBSCRIBED"
-      %{"event" => "info", "version" => 2} ->
-        IO.puts "MASTER CONNECTION"
-    end
+  def handle_info({:set_channel, ticker, channel_id}, {socket, channels, _}) do
+    {:noreply, {socket, channels ++ [%{channel_id => ticker}], true}}
   end
 end
