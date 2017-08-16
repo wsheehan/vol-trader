@@ -13,7 +13,7 @@ defmodule Voltrader.Mixfile do
 
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :ecto, :postgrex],
       mod: {Voltrader, []}
     ]
   end
@@ -23,7 +23,8 @@ defmodule Voltrader.Mixfile do
       {:httpoison, "~> 0.12"},
       {:poison, "~> 3.1"},
       {:socket, "~> 0.3"},
-      {:gen_stage, "~> 0.11"}
+      {:postgrex, ">= 0.0.0"},
+      {:ecto, "~> 2.1"}
     ]
   end
 end
