@@ -65,7 +65,7 @@ defmodule Voltrader.Socket.BitfinexClient do
       [channel_id, prices] when is_list(prices) ->
         %{^channel_id => ticker} = Enum.find(channels, fn(el) -> Map.keys(el) == [channel_id] end)
         {:ok, trader} = Registry.lookup(Registry, ticker, __MODULE__)
-        Process.send(trader, {:quote, Utilities.format_price_data(prices, @price_labels), ticker}, [])
+        Process.send(trader, {:quote, Utilities.lists_to_map(prices, @price_labels), ticker}, [])
       _ -> nil
     end
     Helper.listen(self())
