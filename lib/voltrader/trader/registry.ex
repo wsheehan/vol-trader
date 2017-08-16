@@ -11,50 +11,57 @@ defmodule Voltrader.Trader.Registry do
   end
 
   @doc """
-  Looks up trader pid for `name` stored in `server`.
+  Looks up trader pid for `ticker` stored in `server`.
   Returns `{:ok, pid}` if trader exists, :error otherwise.
   """
-  def lookup(server, name, socket) do
-    GenServer.call(server, {:lookup, {name,socket}})
+  def lookup(server, ticker, socket) do
+    GenServer.call(server, {:lookup, {ticker, socket}})
   end
 
   @doc """
-  Ensures there is a trader associated to the given `name` in `server`.
+  Ensures there is a trader associated to the given `ticker` in `server`.
   """
-  def create(server, name, socket) do
-    GenServer.call(server, {:create, {name, socket}})
+  def create(server, ticker, socket) do
+    GenServer.call(server, {:create, {ticker, socket}})
   end
 
   ## Server Callbacks
 
+  @doc """
+  State: {tickers, refs}
+  """
   def init(:ok) do
-    names = %{}
-    refs = %{}
-    {:ok, {names, refs}}
+    {:ok, {%{}, %{}}}
   end
 
-  def handle_call({:lookup, {name, socket}}, _from, {names, _} = state) do
-    {:reply, Map.fetch(names, {name, socket}), state}
+  def handle_call({:lookup, {ticker, socket}}, _from, {tickers, _} = state) do
+    {:reply, Map.fetch(tickers, {ticker, socket}), state}
   end
 
-  def handle_call({:create, {name, socket}}, _from, {names, refs}) do
-    if Map.has_key?(names, {name, socket}) do
-      {:reply, %{error: "process already exists"}, {names, refs}}
+  def handle_call({:create, {ticker, socket}}, _from, {tickers, refs}) do
+    if Map.has_key?(tickers, {ticker, socket}) do
+      {:reply, %{error: "process already exists"}, {tickers, refs}}
     else
       {:ok, pid} = Voltrader.Trader.Supervisor.start_trader()
       ref = Process.monitor(pid)
-      refs = Map.put(refs, ref, {name, socket})
-      names = Map.put(names, {name, socket}, pid)
-      {:reply, %{{name, socket} => pid}, {names, refs}}
+      refs = Map.put(refs, ref, {ticker, socket})
+      tickers = Map.put(tickers, {ticker, socket}, pid)
+      {:reply, %{{ticker, socket} => pid}, {tickers, refs}}
     end
   end
 
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, {names, refs}) do
-    {name, refs} = Map.pop(refs, ref)
-    names = Map.delete(names, name)
-    {:noreply, {names, refs}}
+  @doc """
+  Handles Trader DOWN message
+  """
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, {tickers, refs}) do
+    {ticker, refs} = Map.pop(refs, ref)
+    tickers = Map.delete(tickers, ticker)
+    {:noreply, {tickers, refs}}
   end
 
+  @doc """
+  Catch-all
+  """
   def handle_info(_msg, state) do
     {:noreply, state}
   end
