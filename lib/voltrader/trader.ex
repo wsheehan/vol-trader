@@ -20,17 +20,17 @@ defmodule Voltrader.Trader do
   # Server
 
   @doc """
-  State: {targets, positions}
+  State: {targets, positions, order_id}
   """
   def init(:ok) do
-    state = {%{}, "UNOPENED"}
+    state = {%{}, "UNOPENED", nil}
     {:ok, state}
   end
 
   @doc """
   Handles quotes in map form
   """
-  def handle_info({:quote, data, ticker}, {%{sell_stop: sell_stop, target_sell: target_sell, volume: _}, position} = state) when is_map(data) do
+  def handle_info({:quote, data, ticker}, {%{sell_stop: sell_stop, target_sell: target_sell, volume: _}, position, order_id} = state) when is_map(data) do
     case data["ask"] do
       x when position == "OPEN" and x > target_sell ->
         Process.send(self(), {:sell, ticker}, [])
@@ -45,27 +45,27 @@ defmodule Voltrader.Trader do
   Handles target initialization
   buys only on init for now
   """
-  def handle_info({:targets, targets, ticker}, {_, position}) do
+  def handle_info({:targets, targets, ticker}, {_, position, _}) do
     case position do
       "UNOPENED" ->
-        Voltrader.Order.Bitfinex.buy(ticker, targets.volume)
+        {:ok, order_id} = Voltrader.Order.Bitfinex.buy(ticker, targets.volume)
       _ ->
         IO.warn("Position already open")
     end
-    {:noreply, {targets, "OPEN"}}
+    {:noreply, {targets, "OPEN", order_id}}
   end
 
   @doc """
   Handle SELL order
   """
-  def handle_info({:sell, ticker}, {targets, position}) do
+  def handle_info({:sell, ticker}, {targets, position, order_id}) do
     case position do
       "OPEN" ->
-        Voltrader.Order.Bitfinex.sell(ticker, targets.volume)
+        Voltrader.Order.Bitfinex.sell(ticker, targets.volume, order_id)
       _ ->
         IO.warn("Position already closed")
     end
-    {:noreply, {targets, "CLOSED"}}
+    {:noreply, {targets, "CLOSED", order_id}}
   end
 
   @doc """
