@@ -7,6 +7,7 @@ defmodule Voltrader.Socket.BitfinexClient do
 
   alias Voltrader.Socket.Helper
   alias Voltrader.Trader.Registry
+  alias Voltrader.Utilities
 
   @slug %{url: "api.bitfinex.com", path: "/ws/2"}
   @price_labels ~w(bid bid_size ask ask_size daily_change daily_change_perc last_price volume high low)
@@ -64,7 +65,7 @@ defmodule Voltrader.Socket.BitfinexClient do
       [channel_id, prices] when is_list(prices) ->
         %{^channel_id => ticker} = Enum.find(channels, fn(el) -> Map.keys(el) == [channel_id] end)
         {:ok, trader} = Registry.lookup(Registry, ticker, __MODULE__)
-        Process.send(trader, {:quote, format_price_data(prices, @price_labels), ticker}, [])
+        Process.send(trader, {:quote, Utilities.format_price_data(prices, @price_labels), ticker}, [])
       _ -> nil
     end
     Helper.listen(self())
@@ -93,11 +94,5 @@ defmodule Voltrader.Socket.BitfinexClient do
   """
   def handle_info(_msg, state) do
     {:noreply, state}
-  end
-
-  # Private
-
-  defp format_price_data(data) do
-    Enum.zip(@price_labels, data) |> Enum.into(%{})
   end
 end
