@@ -34,8 +34,9 @@ defmodule Voltrader.Research do
   end
 
   defp start_trader(targets, ticker) do
-    BitfinexClient.join_channel(BitfinexClient, ticker)
-    {:ok, trader} = Registry.lookup(Registry, ticker, BitfinexClient)
+    time = Utilities.current_time
+    BitfinexClient.join_channel(BitfinexClient, ticker, time)
+    {:ok, trader} = Registry.lookup(Registry, ticker, time)
     Process.send(trader, {:targets, targets, ticker}, [])
   end
 end

@@ -17,8 +17,6 @@ defmodule Voltrader.Order.Bitfinex do
     order = %Order{client: Atom.to_string(__MODULE__), ticker: ticker, volume: volume, buy_price: buy_price}
     case Repo.insert(order) do
       {:ok, struct} ->
-        # {:ok, trader} = Registry.lookup(Registry, ticker, BitfinexClient)
-        # Process.send(trader, {:order_id, struct.id}, [])
         {:ok, struct.id}
       {:error, _} ->
         IO.warn("Order could not save")
@@ -33,8 +31,7 @@ defmodule Voltrader.Order.Bitfinex do
     order = Ecto.Changeset.change(order, sell_price: sell_price)
     case Repo.update(order) do
       {:ok, struct} ->
-        {:ok, trader} = Registry.lookup(Registry, ticker, Voltrader.Socket.BitfinexClient)
-        Genserver.stop(trader)
+        {:ok, struct}
       {:error, changeset} ->
         IO.warn("Order could not update")
     end
