@@ -1,0 +1,10 @@
+version: '3'
+services:
+  postgres:
+    image: "postgres:10"
+    env_file: .env
+  voltrader:
+    image: "sheehan95/voltrader"
+    env_file: .env
+    links:
+      - postgres:postgres
