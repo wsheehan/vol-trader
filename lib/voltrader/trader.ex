@@ -8,6 +8,8 @@ defmodule Voltrader.Trader do
 
   use GenServer
 
+  alias Voltrader.Order.Bitfinex
+
   # Client
 
   @doc """
@@ -46,11 +48,9 @@ defmodule Voltrader.Trader do
   buys only on init for now
   """
   def handle_info({:targets, targets, ticker}, {_, position, _}) do
-    case position do
-      "UNOPENED" ->
-        {:ok, order_id} = Voltrader.Order.Bitfinex.buy(ticker, targets.volume)
-      _ ->
-        IO.warn("Position already open")
+    order_id = case Bitfinex.buy(ticker, targets.target_buy, targets.volume) do
+      {:ok, id} -> id
+      _ -> nil
     end
     {:noreply, {targets, "OPEN", order_id}}
   end
@@ -59,11 +59,11 @@ defmodule Voltrader.Trader do
   Handle SELL order
   """
   def handle_info({:sell, ticker}, {targets, position, order_id}) do
-    case position do
-      "OPEN" ->
-        Voltrader.Order.Bitfinex.sell(ticker, targets.volume, order_id)
-      _ ->
-        IO.warn("Position already closed")
+    case Bitfinex.sell(ticker, targets.target_sell, targets.volume, order_id) do
+      {:ok, struct} ->
+        IO.puts("Successful Sell")
+        GenServer.stop(self(), :normal)
+      _ -> nil
     end
     {:noreply, {targets, "CLOSED", order_id}}
   end
