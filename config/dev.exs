@@ -1,0 +1,16 @@
+use Mix.Config
+
+# DB config
+config :voltrader, Voltrader.DB.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  database: "voltrader_dev",
+  username: "postgres",
+  password: System.get_env("POSTGRES_PASSWORD"),
+  hostname: "postgres",
+  port: "5432"
+
+# Cron config
+config :voltrader, Voltrader.Tasks.Scheduler,
+  jobs: [
+    {"* * * * *", {Voltrader.Research, :call}}
+  ]
