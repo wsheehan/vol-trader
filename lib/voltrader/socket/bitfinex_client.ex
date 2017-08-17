@@ -21,8 +21,8 @@ defmodule Voltrader.Socket.BitfinexClient do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
-  def join_channel(server, ticker) do
-    GenServer.call(server, {:join_channel, ticker})
+  def join_channel(server, ticker, timestamp) do
+    GenServer.call(server, {:join_channel, ticker, timestamp})
   end
 
   # Server
@@ -30,9 +30,11 @@ defmodule Voltrader.Socket.BitfinexClient do
   @doc """
   Init server with master socket
   connection and an initial heartbeat
+
+  State: {socket, channels, listening?}
   """
   def init(:ok) do
-    state = {Helper.connection(@slug), [], false}
+    state = {Helper.connection(@slug), %{}, false}
     Helper.heartbeat(self(), 10000)
     {:ok, state}
   end
@@ -40,17 +42,17 @@ defmodule Voltrader.Socket.BitfinexClient do
   @doc """
   Spin up channel
   """
-  def handle_call({:join_channel, ticker}, _from, {socket, channels, listening}) do
+  def handle_call({:join_channel, ticker, timestamp}, _from, {socket, channels, listening}) do
     {:ok, msg} = Poison.encode(%{event: "subscribe", channel: "ticker", symbol: ticker})
     case socket |> Socket.Web.send!({:text, msg}) do
       :ok ->
         IO.puts "#{ticker} Channel Opened"
-        Registry.create(Registry, ticker, __MODULE__)
+        Registry.create(Registry, ticker, timestamp)
         unless listening do
           Helper.listen(self())
         end
     end
-    {:reply, channels, {socket, channels, true}}
+    {:reply, {ticker, timestamp}, {socket, Map.merge(channels, %{{ticker, timestamp} => nil}), true}}
   end
 
   @doc """
@@ -63,9 +65,12 @@ defmodule Voltrader.Socket.BitfinexClient do
       %{"event" => "error", "msg" => "subscribe: dup", "channel" => _, "code" => _, "pair" => _, "symbol" => _} ->
         IO.warn("Duplicate Subscription")
       [channel_id, prices] when is_list(prices) ->
-        %{^channel_id => ticker} = Enum.find(channels, fn(el) -> Map.keys(el) == [channel_id] end)
-        {:ok, trader} = Registry.lookup(Registry, ticker, __MODULE__)
-        Process.send(trader, {:quote, Utilities.lists_to_map(prices, @price_labels), ticker}, [])
+        listening_traders = Enum.filter(channels, fn({k,v}) -> v == channel_id end)
+        Enum.each(listening_traders, fn({k, v}) ->
+          {ticker, timestamp} = k
+          {:ok, trader} = Registry.lookup(Registry, ticker, timestamp)
+          Process.send(trader, {:quote, Utilities.lists_to_map(prices, @price_labels), ticker}, [])
+        end)    
       _ -> nil
     end
     Helper.listen(self())
@@ -86,7 +91,13 @@ defmodule Voltrader.Socket.BitfinexClient do
   Write channel data to server state
   """
   def handle_info({:set_channel, ticker, channel_id}, {socket, channels, _}) do
-    {:noreply, {socket, channels ++ [%{channel_id => ticker}], true}}
+    el = Enum.find_value(channels, fn({k,v}) -> 
+      case k do
+        {ticker, _} when v == nil -> k
+        _ -> false
+      end
+    end)
+    {:noreply, {socket, Map.put(channels, el, channel_id), true}}
   end
 
   @doc """
