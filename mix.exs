@@ -13,7 +13,7 @@ defmodule Voltrader.Mixfile do
 
   def application do
     [
-      extra_applications: [:logger, :ecto, :postgrex, :timex],
+      extra_applications: [:logger, :ecto, :postgrex],
       mod: {Voltrader, []}
     ]
   end
