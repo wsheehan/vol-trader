@@ -10,11 +10,10 @@ defmodule Voltrader.Order.Bitfinex do
   @key Application.get_env(:voltrader, :bitfinex_api_key)
   @secret_key Application.get_env(:voltrader, :bitfinex_api_secret)
 
-  def buy(ticker, volume) do
+  def buy(ticker, price, volume) do
     IO.puts("Place BUY order for #{volume} #{ticker}")
-    # {:ok, buy_price} = order(...)
-    buy_price = 10.0
-    order = %Order{client: Atom.to_string(__MODULE__), ticker: ticker, volume: volume, buy_price: buy_price}
+    # {:ok, actual_price} = order(...)
+    order = %Order{client: Atom.to_string(__MODULE__), ticker: ticker, volume: volume, buy_price: price}
     case Repo.insert(order) do
       {:ok, struct} ->
         {:ok, struct.id}
@@ -23,12 +22,11 @@ defmodule Voltrader.Order.Bitfinex do
     end
   end
 
-  def sell(ticker, volume, id) do
+  def sell(ticker, price, volume, id) do
     IO.puts("Place SELL order for #{volume} #{ticker}")
-    # {:ok, sell_price} = order(...)
-    sell_price = 15.0
+    # {:ok, actual_price} = order(...)
     {:ok, order} = Repo.get(Order, id)
-    order = Ecto.Changeset.change(order, sell_price: sell_price)
+    order = Ecto.Changeset.change(order, sell_price: price)
     case Repo.update(order) do
       {:ok, struct} ->
         {:ok, struct}
