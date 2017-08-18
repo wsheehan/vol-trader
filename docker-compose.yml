@@ -3,8 +3,13 @@ services:
   postgres:
     image: "postgres:10"
     env_file: .env
+    volumes:
+      - ./voltrader_data:/var/lib/postgresql/data
   voltrader:
     image: "sheehan95/voltrader"
     env_file: .env
+    depends_on:
+      - "postgres"
     links:
       - postgres:postgres
+    command: ["bash", "run.sh"]
