@@ -6,5 +6,5 @@ config :voltrader, Voltrader.DB.Repo,
   database: "voltrader_test",
   username: "postgres",
   password: System.get_env("POSTGRES_PASSWORD"),
-  hostname: "postgres", # this will change...
+  hostname: "localhost", # this will change...
   port: "5432"

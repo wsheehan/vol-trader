@@ -6,7 +6,7 @@ config :voltrader, Voltrader.DB.Repo,
   database: "voltrader_dev",
   username: "postgres",
   password: System.get_env("POSTGRES_PASSWORD"),
-  hostname: "postgres",
+  hostname: "localhost",
   port: "5432"
 
 # Cron config
