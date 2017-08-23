@@ -8,6 +8,8 @@ defmodule Voltrader.DB.Repo.Migrations.CreateOrders do
       add :volume, :float
       add :buy_price, :float
       add :sell_price, :float
+
+      timestamps()
     end
   end
 end
