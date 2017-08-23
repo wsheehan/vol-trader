@@ -5,11 +5,13 @@ services:
     env_file: .env
     volumes:
       - ./voltrader_data:/var/lib/postgresql/data
+    networks:
+      - voltrader
   voltrader:
     image: "sheehan95/voltrader"
     env_file: .env
+    networks:
+      - voltrader
     depends_on:
-      - "postgres"
-    links:
-      - postgres:postgres
-    command: ["bash", "run.sh"]
+      - postgres
+    command: ["iex", "-S", "mix"]
