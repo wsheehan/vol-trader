@@ -25,7 +25,7 @@ defmodule Voltrader.Research do
   defp set_targets(data, ticker) do
     percent_change = (data["CLOSE"] - data["OPEN"]) / data["OPEN"]
     case percent_change do
-      x when x < -0.01 -> # Incredibly naive at this point
+      x when x > 0 -> # Incredibly naive at this point
         targets = %{target_buy: data["CLOSE"] * 1.0, sell_stop: data["CLOSE"] * 0.9, target_sell: data["CLOSE"] * 1.05, volume: 10.0}
         start_trader(targets, ticker)
       _ ->
