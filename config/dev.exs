@@ -12,5 +12,5 @@ config :voltrader, Voltrader.DB.Repo,
 # Cron config
 config :voltrader, Voltrader.Tasks.Scheduler,
   jobs: [
-    {"* * * * *", {Voltrader.Research, :call}}
+    {"* * * * *", fn -> Voltrader.Research.call end}
   ]

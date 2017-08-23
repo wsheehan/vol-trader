@@ -5,7 +5,6 @@ defmodule Voltrader.Order.Bitfinex do
 
   alias Voltrader.DB.Repo
   alias Voltrader.DB.Order
-  alias Voltrader.Trader.Registry
 
   @key Application.get_env(:voltrader, :bitfinex_api_key)
   @secret_key Application.get_env(:voltrader, :bitfinex_api_secret)
@@ -24,14 +23,13 @@ defmodule Voltrader.Order.Bitfinex do
 
   def sell(ticker, price, volume, id) do
     IO.puts("Place SELL order for #{volume} #{ticker}")
-    # {:ok, actual_price} = order(...)
-    {:ok, order} = Repo.get(Order, id)
-    order = Ecto.Changeset.change(order, sell_price: price)
+    order = Repo.get(Order, id) |> Ecto.Changeset.change(sell_price: price)
     case Repo.update(order) do
       {:ok, struct} ->
         {:ok, struct}
       {:error, changeset} ->
         IO.warn("Order could not update")
+        IO.inspect(changeset)
     end
   end
 end

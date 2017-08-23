@@ -65,8 +65,8 @@ defmodule Voltrader.Socket.BitfinexClient do
       %{"event" => "error", "msg" => "subscribe: dup", "channel" => _, "code" => _, "pair" => _, "symbol" => _} ->
         IO.warn("Duplicate Subscription")
       [channel_id, prices] when is_list(prices) ->
-        listening_traders = Enum.filter(channels, fn({k,v}) -> v == channel_id end)
-        Enum.each(listening_traders, fn({k, v}) ->
+        listening_traders = Enum.filter(channels, fn({_,v}) -> v == channel_id end)
+        Enum.each(listening_traders, fn({k, _}) ->
           {ticker, timestamp} = k
           {:ok, trader} = Registry.lookup(Registry, ticker, timestamp)
           Process.send(trader, {:quote, Utilities.lists_to_map(prices, @price_labels), ticker}, [])

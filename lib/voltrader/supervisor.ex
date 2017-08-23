@@ -14,7 +14,9 @@ defmodule Voltrader.Supervisor do
       {Voltrader.Trader.Registry, name: Voltrader.Trader.Registry},
       {Voltrader.Socket.BitfinexClient, name: Voltrader.Socket.BitfinexClient},
       {Voltrader.DB.Repo, {Voltrader.DB.Repo, :start_link, []}, :permanent, :infinity,
- :supervisor, [Voltrader.DB.Repo]}
+ :supervisor, [Voltrader.DB.Repo]},
+      {Voltrader.Tasks.Scheduler, {Voltrader.Tasks.Scheduler, :start_link, []}, :permanent, 5000,
+ :worker, [Voltrader.Tasks.Scheduler]}
     ]
 
     Supervisor.init(children, strategy: :one_for_all)
