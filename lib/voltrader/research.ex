@@ -26,7 +26,12 @@ defmodule Voltrader.Research do
     percent_change = (data["CLOSE"] - data["OPEN"]) / data["OPEN"]
     case percent_change do
       x when x > 0 -> # Incredibly naive at this point
-        targets = %{target_buy: data["CLOSE"] * 1.0, sell_stop: data["CLOSE"] * 0.9, target_sell: data["CLOSE"] * 1.05, volume: 10.0}
+        targets = %{
+          target_buy: data["CLOSE"] * 1.0, 
+          sell_stop: data["CLOSE"] * 0.98, 
+          target_sell: data["CLOSE"] * 1.01, 
+          volume: data["CLOSE"] / 100.0
+        }
         start_trader(targets, ticker)
       _ ->
         IO.puts("Not buying #{ticker}")
