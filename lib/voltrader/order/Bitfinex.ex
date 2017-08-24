@@ -12,7 +12,7 @@ defmodule Voltrader.Order.Bitfinex do
   def buy(ticker, price, volume) do
     IO.puts("Place BUY order for #{volume} #{ticker}")
     # {:ok, actual_price} = order(...)
-    order = %Order{client: Atom.to_string(__MODULE__), ticker: ticker, volume: volume, buy_price: price}
+    order = %Order{client_id: 1, ticker: ticker, volume: volume, buy_price: price}
     case Repo.insert(order) do
       {:ok, struct} ->
         {:ok, struct.id}
