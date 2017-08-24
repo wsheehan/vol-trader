@@ -6,6 +6,8 @@ defmodule Voltrader do
   use Application
 
   def start(_type, _args) do
-    Voltrader.Supervisor.start_link(name: Voltrader.Supervisor)
+    {:ok, pid} = Voltrader.Supervisor.start_link(name: Voltrader.Supervisor)
+    Voltrader.DB.Seed.call()
+    {:ok, pid}
   end
 end
